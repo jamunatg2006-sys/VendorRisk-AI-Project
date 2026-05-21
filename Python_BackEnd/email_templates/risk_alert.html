@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; }
+        .header { border-bottom: 2px solid #2563eb; padding-bottom: 20px; }
+        h1 { color: #1e40af; margin: 0; }
+        .content { padding: 30px 0; }
+        .alert-box { border-left: 4px solid #dc2626; background: #fee2e2; padding: 15px; margin: 20px 0; border-radius: 4px; }
+        .alert-box.medium { border-left-color: #f59e0b; background: #fef3c7; }
+        .alert-box.high { border-left-color: #dc2626; background: #fee2e2; }
+        .risk-score { font-size: 32px; font-weight: bold; color: #dc2626; }
+        .button { background: #2563eb; color: white; padding: 12px 30px; border-radius: 6px; text-decoration: none; display: inline-block; margin: 20px 0; }
+        .footer { text-align: center; color: #666; font-size: 12px; border-top: 1px solid #eee; padding-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚨 VendorRisk Alert</h1>
+        </div>
+        <div class="content">
+            <p>Hi {username},</p>
+            <p>A vendor you're monitoring has triggered a risk alert:</p>
+
+            <div class="alert-box {severity}">
+                <strong>Vendor:</strong> {vendor_name}<br>
+                <strong>Alert Type:</strong> {alert_type}<br>
+                <strong>Risk Score:</strong> <span class="risk-score">{risk_score}/100</span><br>
+                <strong>Severity:</strong> {severity_text}<br>
+                <br>
+                <strong>Details:</strong> {alert_message}
+            </div>
+
+            <p><a href="{dashboard_link}" class="button">View in Dashboard</a></p>
+
+            <h3>Recommended Actions:</h3>
+            <ul>
+                <li>Review the vendor's risk profile in your dashboard</li>
+                <li>Update your vendor assessment and risk mitigation strategy</li>
+                <li>Adjust notification preferences if needed</li>
+            </ul>
+        </div>
+        <div class="footer">
+            <p>© 2026 VendorRisk. All rights reserved.<br>
+            <a href="{unsubscribe_link}">Unsubscribe from this vendor's alerts</a></p>
+        </div>
+    </div>
+</body>
+</html>

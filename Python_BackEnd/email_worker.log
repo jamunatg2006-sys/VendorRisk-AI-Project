@@ -1,0 +1,43 @@
+2026-05-19 22:41:18,930 - INFO - ============================================================
+2026-05-19 22:41:18,939 - INFO -    Database: C:/Users/riya_/Desktop/Projects/VendorRisk/VendorRisk/BACKENDD/database/vendors.db
+2026-05-19 22:41:18,939 - INFO -    SMTP: smtp.mailtrap.io:2525
+2026-05-19 22:41:18,940 - INFO -    Sender: VendorRisk Alerts
+2026-05-19 22:41:18,940 - INFO -    Demo Mode: True
+2026-05-19 22:41:18,940 - INFO - ============================================================
+2026-05-19 22:41:18,947 - INFO - 
+  [ID: 1] Processing: medhetedhe48@gmail.com
+2026-05-19 22:41:18,947 - INFO -     Subject: Verify Your VendorRisk Account
+2026-05-19 22:41:18,947 - INFO - [DEMO] Would send email to medhetedhe48@gmail.com: Verify Your VendorRisk Account
+2026-05-19 22:41:18,951 - INFO - 
+============================================================
+2026-05-19 22:41:18,954 - INFO - ============================================================
+2026-05-19 22:54:53,816 - INFO - ============================================================
+2026-05-19 22:54:53,820 - INFO -    Database: C:/Users/riya_/Desktop/Projects/VendorRisk/VendorRisk/BACKENDD/database/vendors.db
+2026-05-19 22:54:53,820 - INFO -    SMTP: smtp.mailtrap.io:2525
+2026-05-19 22:54:53,820 - INFO -    Sender: VendorRisk Alerts
+2026-05-19 22:54:53,820 - INFO -    Demo Mode: False
+2026-05-19 22:54:53,821 - INFO - ============================================================
+2026-05-19 22:54:53,826 - INFO - 
+============================================================
+2026-05-19 22:54:53,829 - INFO - ============================================================
+2026-05-20 22:09:14,300 - INFO - ============================================================
+2026-05-20 22:09:14,324 - INFO -    Database: C:/Users/riya_/Desktop/Projects/VendorRisk/VendorRisk/BACKENDD/database/vendors.db
+2026-05-20 22:09:14,328 - INFO -    SMTP: smtp.mailtrap.io:2525
+2026-05-20 22:09:14,332 - INFO -    Sender: VendorRisk Alerts
+2026-05-20 22:09:14,332 - INFO -    Demo Mode: False
+2026-05-20 22:09:14,333 - INFO - ============================================================
+2026-05-20 22:09:14,361 - INFO - 
+  [ID: 2] Processing: medhetedhe48@gmail.com
+2026-05-20 22:09:14,364 - INFO -     Subject: VendorRisk Password Reset
+2026-05-20 22:09:21,706 - ERROR - SMTP error: Connection unexpectedly closed
+2026-05-20 22:09:21,723 - INFO - 
+  [ID: 3] Processing: medhetedhe48@gmail.com
+2026-05-20 22:09:21,723 - INFO -     Subject: VendorRisk Password Reset
+2026-05-20 22:09:28,491 - ERROR - SMTP error: Connection unexpectedly closed
+2026-05-20 22:09:28,507 - INFO - 
+  [ID: 4] Processing: medhetedhe48@gmail.com
+2026-05-20 22:09:28,508 - INFO -     Subject: VendorRisk Password Reset
+2026-05-20 22:09:32,894 - ERROR - SMTP error: Connection unexpectedly closed
+2026-05-20 22:09:32,903 - INFO - 
+============================================================
+2026-05-20 22:09:32,916 - INFO - ============================================================

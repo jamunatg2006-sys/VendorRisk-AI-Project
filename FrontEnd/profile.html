@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile - VendorRisk</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f9fafb;
+            min-height: 100vh;
+        }
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo { font-size: 24px; font-weight: bold; }
+        .navbar-right { display: flex; gap: 20px; align-items: center; }
+        .navbar-right a, .navbar-right button {
+            color: white;
+            text-decoration: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .navbar-right a:hover, .navbar-right button:hover { opacity: 0.8; }
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        .page-title {
+            font-size: 32px;
+            color: #1f2937;
+            margin-bottom: 30px;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .tab-btn {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: #6b7280;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .tab-btn.active {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
+        }
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        .tab-content.active { display: block; }
+        .form-group {
+            margin-bottom: 24px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #374151;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        .btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3); }
+        .btn-secondary {
+            background: white;
+            color: #2563eb;
+            border: 2px solid #2563eb;
+        }
+        .btn-danger {
+            background: #dc2626;
+        }
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .message.success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+            display: block;
+        }
+        .message.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+            display: block;
+        }
+        .preference-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+        .preference-label {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .preference-label strong {
+            color: #1f2937;
+        }
+        .preference-label small {
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">🛡️ VendorRisk</div>
+        <div class="navbar-right">
+            <a href="dashboard.html">Dashboard</a>
+            <span id="userDisplay">User</span>
+            <button onclick="logout()">Logout</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <h1 class="page-title">Profile Settings</h1>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('profile')">Profile</button>
+            <button class="tab-btn" onclick="switchTab('preferences')">Notification Preferences</button>
+            <button class="tab-btn" onclick="switchTab('security')">Security</button>
+        </div>
+
+        <!-- Profile Tab -->
+        <div id="profile" class="tab-content active">
+            <div id="profileMessage" class="message"></div>
+            <form id="profileForm">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+
+                <button type="submit" class="btn">Update Profile</button>
+            </form>
+        </div>
+
+        <!-- Preferences Tab -->
+        <div id="preferences" class="tab-content">
+            <div id="preferencesMessage" class="message"></div>
+            <form id="preferencesForm">
+                <div class="preference-item">
+                    <div class="preference-label">
+                        <strong>High Risk Alerts</strong>
+                        <small>Get notified when a vendor reaches high risk</small>
+                    </div>
+                    <input type="checkbox" id="alert_on_high_risk" checked>
+                </div>
+
+                <div class="preference-item">
+                    <div class="preference-label">
+                        <strong>Critical Vulnerabilities</strong>
+                        <small>Immediate alerts for critical security issues</small>
+                    </div>
+                    <input type="checkbox" id="alert_on_critical" checked>
+                </div>
+
+                <div class="form-group">
+                    <label for="digest_frequency">Digest Frequency</label>
+                    <select id="digest_frequency" required>
+                        <option value="daily">Daily</option>
+                        <option value="weekly" selected>Weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn">Save Preferences</button>
+            </form>
+        </div>
+
+        <!-- Security Tab -->
+        <div id="security" class="tab-content">
+            <div id="securityMessage" class="message"></div>
+            <h2 style="margin-bottom: 20px; color: #1f2937;">Change Password</h2>
+            <form id="securityForm">
+                <div class="form-group">
+                    <label for="currentPassword">Current Password</label>
+                    <input type="password" id="currentPassword" name="currentPassword" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="newPassword">New Password</label>
+                    <input type="password" id="newPassword" name="newPassword" required placeholder="Minimum 8 characters">
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required>
+                </div>
+
+                <button type="submit" class="btn">Change Password</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5001';
+        let sessionToken = localStorage.getItem('sessionToken');
+        let user = JSON.parse(localStorage.getItem('user') || '{}');
+
+        if (!sessionToken) {
+            window.location.href = 'login.html';
+        }
+
+        // Set user display
+        document.getElementById('userDisplay').textContent = user.username || 'User';
+
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+        }
+
+        // Load preferences
+        async function loadPreferences() {
+            try {
+                const response = await fetch(`${API_BASE}/user/preferences`, {
+                    headers: { 'Authorization': `Bearer ${sessionToken}` }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('alert_on_high_risk').checked = data.data.alert_on_high_risk;
+                    document.getElementById('alert_on_critical').checked = data.data.alert_on_critical;
+                    document.getElementById('digest_frequency').value = data.data.digest_frequency;
+                }
+            } catch (error) {
+                console.error('Error loading preferences:', error);
+            }
+        }
+
+        // Profile form
+        document.getElementById('profileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const msg = document.getElementById('profileMessage');
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/profile`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${sessionToken}`
+                    },
+                    body: JSON.stringify({ email })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    msg.textContent = '✅ ' + data.message;
+                    msg.classList.add('success');
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                msg.textContent = '❌ ' + error.message;
+                msg.classList.add('error');
+            }
+        });
+
+        // Preferences form
+        document.getElementById('preferencesForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const msg = document.getElementById('preferencesMessage');
+
+            try {
+                const response = await fetch(`${API_BASE}/user/preferences`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${sessionToken}`
+                    },
+                    body: JSON.stringify({
+                        alert_on_high_risk: document.getElementById('alert_on_high_risk').checked,
+                        alert_on_critical: document.getElementById('alert_on_critical').checked,
+                        digest_frequency: document.getElementById('digest_frequency').value
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    msg.textContent = '✅ ' + data.message;
+                    msg.classList.add('success');
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                msg.textContent = '❌ ' + error.message;
+                msg.classList.add('error');
+            }
+        });
+
+        // Security form
+        document.getElementById('securityForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const msg = document.getElementById('securityMessage');
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/change-password`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${sessionToken}`
+                    },
+                    body: JSON.stringify({
+                        currentPassword: document.getElementById('currentPassword').value,
+                        newPassword: document.getElementById('newPassword').value,
+                        confirmPassword: document.getElementById('confirmPassword').value
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    msg.textContent = '✅ ' + data.message;
+                    msg.classList.add('success');
+                    document.getElementById('securityForm').reset();
+                    setTimeout(() => window.location.href = 'login.html', 2000);
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                msg.textContent = '❌ ' + error.message;
+                msg.classList.add('error');
+            }
+        });
+
+        // Logout
+        function logout() {
+            fetch(`${API_BASE}/auth/logout`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${sessionToken}` }
+            }).finally(() => {
+                localStorage.removeItem('sessionToken');
+                localStorage.removeItem('user');
+                window.location.href = 'login.html';
+            });
+        }
+
+        // Load initial data
+        document.getElementById('email').value = user.email || '';
+        loadPreferences();
+    </script>
+</body>
+</html>
