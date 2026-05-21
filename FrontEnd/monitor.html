@@ -43,6 +43,13 @@
         }
         .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--accent-blue); }
         .logo img { width: 40px; }
+        .nav-links {
+            list-style: none;
+            display: flex;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+        }
         .nav-links a { text-decoration: none; color: var(--text-light-gray); margin-left: 20px; }
         .nav-links a:hover, .nav-links a.active { color: var(--accent-blue); }
 
@@ -173,13 +180,7 @@
 <body>
     <nav>
         <div class="logo"><img src="assets/logo.png" alt="Logo"><span>VendorRisk-AI</span></div>
-        <div class="nav-links">
-            <a href="index.html">Home</a>
-            <a href="analyze.html">Analyze</a>
-            <a href="dashboard.html">Dashboard</a>
-            <a href="vendor-comparison.html">Compare</a>
-            <a href="monitor.html" class="active">Monitor</a>
-        </div>
+        <div id="navLinks" class="nav-links"></div>
     </nav>
 
     <div class="container">
@@ -251,7 +252,7 @@
                 document.getElementById('totalVendors').innerText = vendors.length;
                 document.getElementById('secureVendors').innerText = vendors.filter(v => v.risk_level === 'Low').length;
                 
-                const riskIncrease = vendors.filter(v => v.risk_score > 60).length;
+                const riskIncrease = vendors.filter(v => v.risk_level === 'High' || v.risk_level === 'Critical').length;
                 document.getElementById('riskIncrease').innerText = riskIncrease;
                 
                 const vendorGrid = document.getElementById('vendorGrid');
@@ -270,7 +271,7 @@
                         </div>
                         <div class="metric-row">
                             <span><i class="fas fa-chart-simple"></i> Risk Score</span>
-                            <strong style="color: ${getRiskColor(vendor.risk_score)}">${vendor.risk_score}/100</strong>
+                            <strong style="color: ${getRiskColor(vendor.risk_score, vendor.risk_level)}">${vendor.risk_score}/100</strong>
                         </div>
                         <div class="metric-row">
                             <span><i class="fas fa-bug"></i> CVEs Found</span>
@@ -292,9 +293,14 @@
             }
         }
 
-        function getRiskColor(score) {
-            if (score >= 70) return '#ff4757';
-            if (score >= 40) return '#ffa502';
+        function getRiskColor(score, level) {
+            if (level) {
+                if (level === 'High' || level === 'Critical') return '#ff4757';
+                if (level === 'Medium') return '#ffa502';
+                return '#2ed573';
+            }
+            if (score < 40) return '#ff4757';
+            if (score < 70) return '#ffa502';
             return '#2ed573';
         }
 
@@ -378,5 +384,6 @@
         loadMonitors();
         loadAlerts();
     </script>
+    <script src="nav.js"></script>
 </body>
 </html>

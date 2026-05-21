@@ -454,26 +454,38 @@
             return '#2ed573';
         }
 
-        // Get risk color for circle
-        function getRiskColor(score) {
-            if (score >= 70) return '#ff4757';
-            if (score >= 40) return '#ffa502';
+        // Get risk color based on risk level
+        function getRiskColor(score, level) {
+            if (level) {
+                if (level === 'High' || level === 'Critical') return '#ff4757';
+                if (level === 'Medium') return '#ffa502';
+                return '#2ed573';
+            }
+            if (score < 40) return '#ff4757';
+            if (score < 70) return '#ffa502';
             return '#2ed573';
         }
 
-        // Calculate winner
+        // Get color for new 6 pillars (health based)
+        function getPillarColor(score) {
+            if (score >= 75) return '#2ed573';
+            if (score >= 50) return '#ffa502';
+            return '#ff4757';
+        }
+
+        // Calculate winner (lowest risk = highest health score)
         function findWinner(vendors) {
             const validVendors = vendors.filter(v => v);
             if (validVendors.length === 0) return null;
             return validVendors.reduce((best, current) => 
-                (current.risk_score < best.risk_score) ? current : best, validVendors[0]);
+                (current.risk_score > best.risk_score) ? current : best, validVendors[0]);
         }
 
         // Render vendor card
         function renderVendorCard(vendor, isWinner = false) {
             if (!vendor) return null;
             
-            const riskColor = getRiskColor(vendor.risk_score);
+            const riskColor = getRiskColor(vendor.risk_score, vendor.risk_level);
             const riskClass = vendor.risk_level === 'High' ? 'risk-high' : (vendor.risk_level === 'Medium' ? 'risk-medium' : 'risk-low');
             
             // Parse factor breakdown
@@ -486,6 +498,57 @@
 
             const circumference = 2 * Math.PI * 60;
             const dashArray = (vendor.risk_score / 100) * circumference;
+
+            // Render factors (support both old 5-factor and new 6-pillar breakdowns)
+            let factorsHtml = '';
+            if (factors.cyber !== undefined) {
+                const pillars = [
+                    { name: 'Cyber Security', key: 'cyber', icon: 'fa-shield-alt' },
+                    { name: 'Operations', key: 'operations', icon: 'fa-cogs' },
+                    { name: 'Financial Stability', key: 'financial', icon: 'fa-coins' },
+                    { name: 'Reputation', key: 'reputation', icon: 'fa-star' },
+                    { name: 'Compliance', key: 'compliance', icon: 'fa-scroll' },
+                    { name: 'Dark Web Scan', key: 'dark_web', icon: 'fa-user-secret' }
+                ];
+                factorsHtml = pillars.map(p => {
+                    const score = factors[p.key] !== undefined ? factors[p.key] : 100;
+                    const color = getPillarColor(score);
+                    return `
+                        <div class="factor-row">
+                            <div class="factor-header">
+                                <span><i class="fas ${p.icon}" style="width: 14px; margin-right: 4px;"></i> ${p.name}</span>
+                                <span style="color: ${color}">${score}/100</span>
+                            </div>
+                            <div class="factor-bar-bg">
+                                <div class="factor-bar-fill" style="width: ${score}%; background: ${color};"></div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                const oldFactors = [
+                    { name: 'Vulnerability Count', key: 'countScore', max: 25, defaultVal: 10 },
+                    { name: 'Severity Score', key: 'severityScore', max: 25, defaultVal: 10 },
+                    { name: 'Critical Vulnerabilities', key: 'criticalScore', max: 20, defaultVal: 8 },
+                    { name: 'Recent Exploits', key: 'recentScore', max: 15, defaultVal: 5 },
+                    { name: 'Industry Risk', key: 'industryScore', max: 15, defaultVal: 8 }
+                ];
+                factorsHtml = oldFactors.map(f => {
+                    const score = factors[f.key] !== undefined ? factors[f.key] : f.defaultVal;
+                    const color = getFactorColor(score, f.max);
+                    return `
+                        <div class="factor-row">
+                            <div class="factor-header">
+                                <span>${f.name}</span>
+                                <span style="color: ${color}">${score}/${f.max}</span>
+                            </div>
+                            <div class="factor-bar-bg">
+                                <div class="factor-bar-fill" style="width: ${(score / f.max) * 100}%; background: ${color};"></div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
 
             return `
                 <div class="vendor-card ${isWinner ? 'winner' : ''}">
@@ -530,56 +593,7 @@
                     
                     <div class="factors-section">
                         <div class="factor-title"><i class="fas fa-chart-simple"></i> Risk Factor Analysis</div>
-                        
-                        <div class="factor-row">
-                            <div class="factor-header">
-                                <span>Vulnerability Count</span>
-                                <span style="color: ${getFactorColor(factors.countScore || 10, 25)}">${factors.countScore || 10}/25</span>
-                            </div>
-                            <div class="factor-bar-bg">
-                                <div class="factor-bar-fill" style="width: ${((factors.countScore || 10) / 25) * 100}%; background: ${getFactorColor(factors.countScore || 10, 25)};"></div>
-                            </div>
-                        </div>
-                        
-                        <div class="factor-row">
-                            <div class="factor-header">
-                                <span>Severity Score</span>
-                                <span style="color: ${getFactorColor(factors.severityScore || 10, 25)}">${factors.severityScore || 10}/25</span>
-                            </div>
-                            <div class="factor-bar-bg">
-                                <div class="factor-bar-fill" style="width: ${((factors.severityScore || 10) / 25) * 100}%; background: ${getFactorColor(factors.severityScore || 10, 25)};"></div>
-                            </div>
-                        </div>
-                        
-                        <div class="factor-row">
-                            <div class="factor-header">
-                                <span>Critical Vulnerabilities</span>
-                                <span style="color: ${getFactorColor(factors.criticalScore || 8, 20)}">${factors.criticalScore || 8}/20</span>
-                            </div>
-                            <div class="factor-bar-bg">
-                                <div class="factor-bar-fill" style="width: ${((factors.criticalScore || 8) / 20) * 100}%; background: ${getFactorColor(factors.criticalScore || 8, 20)};"></div>
-                            </div>
-                        </div>
-                        
-                        <div class="factor-row">
-                            <div class="factor-header">
-                                <span>Recent Exploits</span>
-                                <span style="color: ${getFactorColor(factors.recentScore || 5, 15)}">${factors.recentScore || 5}/15</span>
-                            </div>
-                            <div class="factor-bar-bg">
-                                <div class="factor-bar-fill" style="width: ${((factors.recentScore || 5) / 15) * 100}%; background: ${getFactorColor(factors.recentScore || 5, 15)};"></div>
-                            </div>
-                        </div>
-                        
-                        <div class="factor-row">
-                            <div class="factor-header">
-                                <span>Industry Risk</span>
-                                <span style="color: ${getFactorColor(factors.industryScore || 8, 15)}">${factors.industryScore || 8}/15</span>
-                            </div>
-                            <div class="factor-bar-bg">
-                                <div class="factor-bar-fill" style="width: ${((factors.industryScore || 8) / 15) * 100}%; background: ${getFactorColor(factors.industryScore || 8, 15)};"></div>
-                            </div>
-                        </div>
+                        ${factorsHtml}
                     </div>
                     
                     <div class="recommendation-box">

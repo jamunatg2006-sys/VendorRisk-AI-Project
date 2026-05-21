@@ -44,6 +44,13 @@
         }
         .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--accent-blue); }
         .logo img { width: 40px; }
+        .nav-links {
+            list-style: none;
+            display: flex;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+        }
         .nav-links a { text-decoration: none; color: var(--text-light-gray); margin-left: 20px; }
         .nav-links a:hover, .nav-links a.active { color: var(--accent-blue); }
 
@@ -338,14 +345,7 @@
 <body>
     <nav>
         <div class="logo"><img src="assets/logo.png" alt="Logo"><span>VendorRisk-AI</span></div>
-        <div class="nav-links">
-            <a href="index.html">Home</a>
-            <a href="analyze.html">Analyze</a>
-            <a href="dashboard.html">Dashboard</a>
-            <a href="compare.html">Compare</a>
-            <a href="monitor.html">Monitor</a>
-            <a href="report.html" class="active">Report</a>
-        </div>
+        <div id="navLinks" class="nav-links"></div>
     </nav>
 
     <div class="container">
@@ -422,22 +422,44 @@
             }
         }
 
-        function getRiskClass(score) {
-            if (score >= 70) return 'high';
-            if (score >= 40) return 'medium';
+        function getRiskClass(score, level) {
+            if (level) {
+                return level.toLowerCase();
+            }
+            if (score < 40) return 'high';
+            if (score < 70) return 'medium';
             return 'low';
         }
 
-        function getRiskText(score) {
-            if (score >= 70) return 'High Risk';
-            if (score >= 40) return 'Medium Risk';
+        function getRiskText(score, level) {
+            if (level) return level + ' Risk';
+            if (score < 40) return 'High Risk';
+            if (score < 70) return 'Medium Risk';
             return 'Low Risk';
         }
 
-        function getRiskColor(score) {
-            if (score >= 70) return '#ff4757';
-            if (score >= 40) return '#ffa502';
+        function getRiskColor(score, level) {
+            if (level) {
+                if (level === 'High' || level === 'Critical') return '#ff4757';
+                if (level === 'Medium') return '#ffa502';
+                return '#2ed573';
+            }
+            if (score < 40) return '#ff4757';
+            if (score < 70) return '#ffa502';
             return '#2ed573';
+        }
+
+        function getOldFactorPenaltyColor(score, max = 25) {
+            const percentage = (score / max) * 100;
+            if (percentage >= 70) return '#ff4757';
+            if (percentage >= 40) return '#ffa502';
+            return '#2ed573';
+        }
+
+        function getPillarColor(score) {
+            if (score >= 75) return '#2ed573';
+            if (score >= 50) return '#ffa502';
+            return '#ff4757';
         }
 
         function getRecommendation(vendor) {
@@ -451,8 +473,8 @@
         }
 
         function generateFullReport(vendor) {
-            const riskColor = getRiskColor(vendor.risk_score);
-            const riskClass = getRiskClass(vendor.risk_score);
+            const riskColor = getRiskColor(vendor.risk_score, vendor.risk_level);
+            const riskClass = getRiskClass(vendor.risk_score, vendor.risk_level);
             const recommendation = getRecommendation(vendor);
             
             let factors = {};
@@ -534,16 +556,50 @@
                         <table class="factors-table">
                             <thead><tr><th>Risk Factor</th><th>Score</th><th>Max</th><th>Performance</th></tr></thead>
                             <tbody>
-                                <tr><td>Vulnerability Count</td><td><strong>${factors.countScore || 10}</strong></td><td>25</td>
-                                    <td><div class="progress-bar-bg"><div class="progress-bar-fill" style="width: ${((factors.countScore || 10)/25)*100}%; background: ${getRiskColor(((factors.countScore || 10)/25)*100)};"></div></div></td></tr>
-                                <tr><td>Severity Score</td><td><strong>${factors.severityScore || 10}</strong></td><td>25</td>
-                                    <td><div class="progress-bar-bg"><div class="progress-bar-fill" style="width: ${((factors.severityScore || 10)/25)*100}%; background: ${getRiskColor(((factors.severityScore || 10)/25)*100)};"></div></div></td></tr>
-                                <tr><td>Critical Vulnerabilities</td><td><strong>${factors.criticalScore || 8}</strong></td><td>20</td>
-                                    <td><div class="progress-bar-bg"><div class="progress-bar-fill" style="width: ${((factors.criticalScore || 8)/20)*100}%; background: ${getRiskColor(((factors.criticalScore || 8)/20)*100)};"></div></div></td></tr>
-                                <tr><td>Recent Exploits</td><td><strong>${factors.recentScore || 5}</strong></td><td>15</td>
-                                    <td><div class="progress-bar-bg"><div class="progress-bar-fill" style="width: ${((factors.recentScore || 5)/15)*100}%; background: ${getRiskColor(((factors.recentScore || 5)/15)*100)};"></div></div></td></tr>
-                                <tr><td>Industry Risk</td><td><strong>${factors.industryScore || 8}</strong></td><td>15</td>
-                                    <td><div class="progress-bar-bg"><div class="progress-bar-fill" style="width: ${((factors.industryScore || 8)/15)*100}%; background: ${getRiskColor(((factors.industryScore || 8)/15)*100)};"></div></div></td></tr>
+                                ${(() => {
+                                    if (factors.cyber !== undefined) {
+                                        const pillars = [
+                                            { name: 'Cyber Security', key: 'cyber' },
+                                            { name: 'Operations', key: 'operations' },
+                                            { name: 'Financial Stability', key: 'financial' },
+                                            { name: 'Reputation', key: 'reputation' },
+                                            { name: 'Compliance', key: 'compliance' },
+                                            { name: 'Dark Web Scan', key: 'dark_web' }
+                                        ];
+                                        return pillars.map(p => {
+                                            const score = factors[p.key] !== undefined ? factors[p.key] : 100;
+                                            const color = getPillarColor(score);
+                                            return `
+                                                <tr>
+                                                    <td><strong>${p.name}</strong></td>
+                                                    <td><strong>${score}</strong></td>
+                                                    <td>100</td>
+                                                    <td><div class="progress-bar-bg"><div class="progress-bar-fill" style="width: ${score}%; background: ${color};"></div></div></td>
+                                                </tr>
+                                            `;
+                                        }).join('');
+                                    } else {
+                                        const oldFactors = [
+                                            { name: 'Vulnerability Count', key: 'countScore', max: 25, defaultVal: 10 },
+                                            { name: 'Severity Score', key: 'severityScore', max: 25, defaultVal: 10 },
+                                            { name: 'Critical Vulnerabilities', key: 'criticalScore', max: 20, defaultVal: 8 },
+                                            { name: 'Recent Exploits', key: 'recentScore', max: 15, defaultVal: 5 },
+                                            { name: 'Industry Risk', key: 'industryScore', max: 15, defaultVal: 8 }
+                                        ];
+                                        return oldFactors.map(f => {
+                                            const score = factors[f.key] !== undefined ? factors[f.key] : f.defaultVal;
+                                            const color = getOldFactorPenaltyColor(score, f.max);
+                                            return `
+                                                <tr>
+                                                    <td><strong>${f.name}</strong></td>
+                                                    <td><strong>${score}</strong></td>
+                                                    <td>${f.max}</td>
+                                                    <td><div class="progress-bar-bg"><div class="progress-bar-fill" style="width: ${(score / f.max) * 100}%; background: ${color};"></div></div></td>
+                                                </tr>
+                                            `;
+                                        }).join('');
+                                    }
+                                })()}
                             </tbody>
                         </table>
                     </div>
@@ -570,8 +626,8 @@
         }
 
         function generateExecutiveReport(vendor) {
-            const riskColor = getRiskColor(vendor.risk_score);
-            const riskClass = getRiskClass(vendor.risk_score);
+            const riskColor = getRiskColor(vendor.risk_score, vendor.risk_level);
+            const riskClass = getRiskClass(vendor.risk_score, vendor.risk_level);
             const recommendation = getRecommendation(vendor);
             const currentDate = new Date().toLocaleDateString('en-US', {
                 year: 'numeric', month: 'long', day: 'numeric'
@@ -680,5 +736,6 @@
 
         loadVendors();
     </script>
+    <script src="nav.js"></script>
 </body>
 </html>

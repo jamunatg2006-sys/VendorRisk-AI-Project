@@ -42,6 +42,19 @@
         }
         .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--accent-blue); font-size: 1.3rem; }
         .logo img { width: 40px; height: 40px; object-fit: contain; }
+        .nav-links {
+            list-style: none;
+            display: flex;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+        }
+        .nav-links li {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: inline-block;
+        }
         .nav-links a { text-decoration: none; color: var(--text-light-gray); margin-left: 20px; font-size: 0.9rem; transition: 0.3s; }
         .nav-links a.active, .nav-links a:hover { color: var(--accent-blue); }
 
@@ -272,13 +285,13 @@
                 if (vendors.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No vendors found. Go to Analyze page to add some.</td></tr>';
                 } else {
-                        // Sort vendors by risk score descending
-                    vendors.sort((a, b) => b.risk_score - a.risk_score);
+                        // Sort vendors by risk score ascending (highest risk first)
+                    vendors.sort((a, b) => a.risk_score - b.risk_score);
                     tbody.innerHTML = vendors.map(v => `
                         <tr>
                             <td><strong>${escapeHtml(v.name)}</strong></td>
                             <td>${escapeHtml(v.industry)}</td>
-                            <td style="font-weight:bold; color: ${v.risk_score >= 70 ? '#ff4757' : (v.risk_score >= 40 ? '#ffa502' : '#2ed573')}">${v.risk_score}</td>
+                            <td style="font-weight:bold; color: ${v.risk_level === 'High' || v.risk_level === 'Critical' ? '#ff4757' : (v.risk_level === 'Medium' ? '#ffa502' : '#2ed573')}">${v.risk_score}</td>
                             <td><span class="badge ${v.risk_level?.toLowerCase()}">${v.risk_level || 'Medium'}</span></td>
                             <td>${v.vulnerabilities || 'N/A'}</td>
                             <td><button class="delete-btn" onclick="deleteVendor(${v.id}, '${escapeHtml(v.name)}')"><i class="fas fa-trash-alt"></i> Delete</button></td>
@@ -350,5 +363,6 @@
         
         window.onload = loadDashboard;
     </script>
+    <script src="nav.js"></script>
 </body>
 </html>
