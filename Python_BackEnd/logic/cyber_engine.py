@@ -10,11 +10,23 @@ Strategy:
 import requests
 import os
 import time
+import tempfile
+
+
+def _prepare_webtech_data_dir() -> None:
+    """Ensure webtech's XDG data parent exists before the package imports."""
+    data_home = os.environ.get("XDG_DATA_HOME")
+    if not data_home:
+        data_home = os.path.join(tempfile.gettempdir(), "vendorrisk-data")
+        os.environ["XDG_DATA_HOME"] = data_home
+    os.makedirs(os.path.join(data_home, "webtech"), exist_ok=True)
 
 try:
+    _prepare_webtech_data_dir()
     import webtech
     WEBTECH_AVAILABLE = True
-except ImportError:
+except Exception:
+    webtech = None
     WEBTECH_AVAILABLE = False
 
 from logic.standards import RiskBenchmarks

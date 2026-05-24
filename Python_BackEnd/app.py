@@ -144,7 +144,7 @@ def health():
     try:
         import webtech
         webtech_ok = True
-    except ImportError:
+    except Exception:
         webtech_ok = False
 
     try:
