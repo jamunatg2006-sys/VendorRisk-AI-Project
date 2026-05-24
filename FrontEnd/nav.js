@@ -52,7 +52,7 @@ async function logout(event) {
     const token = localStorage.getItem('sessionToken');
     if (token) {
         try {
-            await fetch('http://localhost:5001/auth/logout', {
+            await fetch('https://vendorrisk-ai-backendd.onrender.com/auth/logout', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             });

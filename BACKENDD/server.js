@@ -11,9 +11,9 @@ const crypto = require('crypto');
 const rateLimit = require('express-rate-limit');
 
 const app = express();
-const PORT = 5001;
+const PORT = process.env.PORT || 5001;
 
-const PYTHON_API_BASE = process.env.PYTHON_API_BASE || 'http://localhost:5000';
+const PYTHON_API_BASE = process.env.PYTHON_API_BASE || 'https://vendorrisk-ai-project-backend.onrender.com';
 
 app.use(cors());
 app.use(express.json());
@@ -959,7 +959,7 @@ async function startServer() {
 
     const totals = await db.get('SELECT COUNT(*) as count FROM vendors');
     const vendorCount = totals?.count || 0;
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
         console.log(`
     ╔═══════════════════════════════════════════════════════════╗
     ║  🛡️  VendorRisk Backend (Auth + Risk Management)         ║
