@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from werkzeug.exceptions import HTTPException
 
 from dotenv import load_dotenv
 import os
@@ -32,6 +33,23 @@ from logic.scoring_engine import RiskAggregator, RiskBenchmarks
 
 app = Flask(__name__)
 CORS(app)
+
+
+@app.errorhandler(Exception)
+def handle_unexpected_error(error):
+    if isinstance(error, HTTPException):
+        return jsonify({
+            "success": False,
+            "error": error.name,
+            "details": error.description
+        }), error.code
+
+    app.logger.exception("Unhandled Python backend error")
+    return jsonify({
+        "success": False,
+        "error": "Internal risk engine error",
+        "details": str(error)
+    }), 500
 
 
 # ── Utility ───────────────────────────────────────────────────────────────

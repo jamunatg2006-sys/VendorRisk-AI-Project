@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: vendorrisk-ai-backendd
+    env: node
+    rootDir: BACKENDD
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: PYTHON_API_BASE
+        value: https://vendorrisk-ai-project-backend.onrender.com
+      - key: FRONTEND_URL
+        value: https://vendor-risk-ai.vercel.app
+
+  - type: web
+    name: vendorrisk-ai-project-backend
+    env: python
+    rootDir: Python_BackEnd
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 180
+    healthCheckPath: /health
+    envVars:
+      - key: ALERT_API_URL
+        value: https://vendorrisk-ai-backendd.onrender.com/api/alerts/internal

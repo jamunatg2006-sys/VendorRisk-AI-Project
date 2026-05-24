@@ -16,16 +16,54 @@ const PORT = process.env.PORT || 5001;
 const PYTHON_API_BASE = process.env.PYTHON_API_BASE || 'https://vendorrisk-ai-project-backend.onrender.com';
 const ANALYSIS_TIMEOUT_MS = Number(process.env.ANALYSIS_TIMEOUT_MS || 120000);
 const FRONTEND_URL = (process.env.FRONTEND_URL || 'http://localhost:8000').replace(/\/$/, '');
+let dbReady = false;
+let dbStartupError = null;
+
+process.on('unhandledRejection', (error) => {
+    console.error('Unhandled promise rejection:', error);
+    logAppEvent('error', 'unhandled_rejection', error.message, { stack: error.stack });
+});
+
+process.on('uncaughtException', (error) => {
+    console.error('Uncaught exception:', error);
+    logAppEvent('error', 'uncaught_exception', error.message, { stack: error.stack });
+});
 
 app.use(cors());
 app.use(express.json());
 
-app.get('/health', (req, res) => {
+app.use((req, res, next) => {
+    const startedAt = Date.now();
+    res.on('finish', () => {
+        if (res.statusCode >= 400) {
+            logAppEvent('warn', 'http_error', `${req.method} ${req.originalUrl} returned ${res.statusCode}`, {
+                method: req.method,
+                path: req.originalUrl,
+                statusCode: res.statusCode,
+                durationMs: Date.now() - startedAt,
+                ip: req.ip
+            });
+        }
+    });
+    next();
+});
+
+app.get('/', (req, res) => {
     res.json({
         success: true,
-        status: 'healthy',
         service: 'VendorRisk Node API',
-        pythonApiBase: PYTHON_API_BASE
+        health: '/health'
+    });
+});
+
+app.get('/health', (req, res) => {
+    res.status(dbReady ? 200 : 503).json({
+        success: true,
+        status: dbReady ? 'healthy' : 'degraded',
+        service: 'VendorRisk Node API',
+        database: dbReady ? 'connected' : 'unavailable',
+        pythonApiBase: PYTHON_API_BASE,
+        error: dbStartupError
     });
 });
 
@@ -57,6 +95,10 @@ const forgotPasswordLimiter = rateLimit({
 // ⚠️ PHASE 2: Authentication middleware to validate session
 const authMiddleware = async (req, res, next) => {
     try {
+        if (!dbReady || !db) {
+            return res.status(503).json({ success: false, error: 'Database unavailable. Please try again shortly.' });
+        }
+
         const token = req.cookies?.sessionToken || req.headers.authorization?.replace('Bearer ', '');
 
         if (!token) {
@@ -93,7 +135,7 @@ let db = null;
 
 async function setupDatabase() {
     try {
-        const dbDir = path.join(__dirname, 'database');
+        const dbDir = process.env.SQLITE_DB_DIR || path.join(__dirname, 'database');
         if (!fs.existsSync(dbDir)) {
             fs.mkdirSync(dbDir, { recursive: true });
             console.log('✅ Created database folder');
@@ -225,13 +267,28 @@ async function setupDatabase() {
             )
         `);
 
+        await db.exec(`
+            CREATE TABLE IF NOT EXISTS app_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                level TEXT NOT NULL,
+                event TEXT NOT NULL,
+                message TEXT,
+                metadata TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
         // Enable WAL mode for better concurrency
         await db.exec('PRAGMA journal_mode=WAL');
 
         console.log('✅ Database ready with monitoring and authentication tables');
+        dbReady = true;
+        dbStartupError = null;
         return true;
     } catch (error) {
         console.error('❌ Database error:', error.message);
+        dbReady = false;
+        dbStartupError = error.message;
         return false;
     }
 }
@@ -251,8 +308,40 @@ async function createAlert(vendorId, vendorName, alertType, message, severity) {
     }
 }
 
+async function logAppEvent(level, event, message, metadata = {}) {
+    if (!dbReady || !db) return;
+
+    try {
+        await db.run(
+            `INSERT INTO app_logs (level, event, message, metadata)
+             VALUES (?, ?, ?, ?)`,
+            [
+                level,
+                event,
+                message ? String(message).slice(0, 1000) : '',
+                JSON.stringify(metadata || {}).slice(0, 4000)
+            ]
+        );
+
+        await db.run(`
+            DELETE FROM app_logs
+            WHERE id NOT IN (
+                SELECT id FROM app_logs
+                ORDER BY id DESC
+                LIMIT 500
+            )
+        `);
+    } catch (error) {
+        console.error('App log write error:', error.message);
+    }
+}
+
 app.post('/api/alerts/internal', async (req, res) => {
     try {
+        if (!dbReady || !db) {
+            return res.status(503).json({ success: false, error: 'Database unavailable' });
+        }
+
         const { vendor_name, risk_level, risk_score, message, details } = req.body;
         if (!vendor_name || !risk_level) {
             return res.status(400).json({ success: false, error: 'Missing alert details' });
@@ -509,6 +598,45 @@ app.get('/api/risk-summary', authMiddleware, async (req, res) => {
 // API Routes (Existing)
 app.get('/api/test', (req, res) => {
     res.json({ message: 'Backend working!', status: 'online', timestamp: new Date().toISOString() });
+});
+
+app.get('/api/health/full', async (req, res) => {
+    const status = {
+        success: true,
+        node: dbReady ? 'healthy' : 'degraded',
+        database: dbReady ? 'connected' : 'unavailable',
+        python: 'unknown'
+    };
+
+    try {
+        const response = await axios.get(`${PYTHON_API_BASE}/health`, { timeout: 15000 });
+        status.python = response.status === 200 ? 'healthy' : 'degraded';
+        status.pythonDetails = response.data;
+    } catch (error) {
+        status.success = false;
+        status.python = 'unavailable';
+        status.pythonError = error.message;
+    }
+
+    res.status(status.success && dbReady ? 200 : 503).json(status);
+});
+
+app.get('/api/logs', authMiddleware, async (req, res) => {
+    try {
+        const limit = Math.min(Number(req.query.limit) || 100, 500);
+        const logs = await db.all(
+            `SELECT id, level, event, message, metadata, created_at
+             FROM app_logs
+             ORDER BY id DESC
+             LIMIT ?`,
+            [limit]
+        );
+
+        res.json({ success: true, data: logs });
+    } catch (error) {
+        console.error('Fetch logs error:', error);
+        res.status(500).json({ success: false, error: 'Could not fetch logs' });
+    }
 });
 
 // ⚠️ PHASE 2: Authentication Endpoints
@@ -942,13 +1070,19 @@ app.get('/api/stats', authMiddleware, async (req, res) => {
     }
 });
 
+app.use((err, req, res, next) => {
+    console.error('Unhandled API error:', err);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+});
+
 // Start server
 async function startServer() {
-    await setupDatabase();
+    const databaseStarted = await setupDatabase();
 
     // ⚠️ PHASE 7: Cleanup expired sessions daily
     setInterval(async () => {
         try {
+            if (!dbReady || !db) return;
             await db.run('DELETE FROM sessions WHERE expires_at < datetime("now")');
             console.log('✅ Expired sessions cleaned up');
         } catch (error) {
@@ -964,11 +1098,11 @@ async function startServer() {
         }
     }, 24 * 60 * 60 * 1000);
 
-    if (new Date().getDay() === 1) {
+    if (databaseStarted && new Date().getDay() === 1) {
         await queueWeeklyDigestEmails();
     }
 
-    const totals = await db.get('SELECT COUNT(*) as count FROM vendors');
+    const totals = databaseStarted && db ? await db.get('SELECT COUNT(*) as count FROM vendors') : { count: 0 };
     const vendorCount = totals?.count || 0;
     app.listen(PORT, '0.0.0.0', () => {
         console.log(`
