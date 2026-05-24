@@ -14,7 +14,10 @@ sys.path.insert(0, os.path.dirname(__file__))
 # Load environment variables from .env
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
 
-ALERT_API_URL = os.getenv('ALERT_API_URL', 'http://localhost:5001/api/alerts/internal')
+ALERT_API_URL = os.getenv(
+    'ALERT_API_URL',
+    'https://vendorrisk-ai-backendd.onrender.com/api/alerts/internal'
+)
 
 # Import all logic modules
 from logic.cyber_engine import CyberScanner

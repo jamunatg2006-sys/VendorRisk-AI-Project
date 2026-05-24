@@ -14,9 +14,20 @@ const app = express();
 const PORT = process.env.PORT || 5001;
 
 const PYTHON_API_BASE = process.env.PYTHON_API_BASE || 'https://vendorrisk-ai-project-backend.onrender.com';
+const ANALYSIS_TIMEOUT_MS = Number(process.env.ANALYSIS_TIMEOUT_MS || 120000);
+const FRONTEND_URL = (process.env.FRONTEND_URL || 'http://localhost:8000').replace(/\/$/, '');
 
 app.use(cors());
 app.use(express.json());
+
+app.get('/health', (req, res) => {
+    res.json({
+        success: true,
+        status: 'healthy',
+        service: 'VendorRisk Node API',
+        pythonApiBase: PYTHON_API_BASE
+    });
+});
 
 // ⚠️ PHASE 7: Rate limiting middleware (relaxed for development)
 const loginLimiter = rateLimit({
@@ -301,7 +312,7 @@ function generateAlertEmailBody(username, vendorName, riskLevel, riskScore, mess
             <strong>Risk Score:</strong> ${riskScore}/100<br>
             <strong>Details:</strong> ${message}
         </div>
-        <p><a href="http://localhost:8000/dashboard.html">View in Dashboard</a></p>
+        <p><a href="${FRONTEND_URL}/dashboard.html">View in Dashboard</a></p>
     `;
 }
 
@@ -334,7 +345,7 @@ async function queueWeeklyDigestEmails() {
                 <p>Hi ${user.username},</p>
                 <p>Here are the top risk findings from the last seven days:</p>
                 <ul>${vendorListHtml}</ul>
-                <p>For more details, visit your <a href="http://localhost:8000/dashboard.html">VendorRisk dashboard</a>.</p>
+                <p>For more details, visit your <a href="${FRONTEND_URL}/dashboard.html">VendorRisk dashboard</a>.</p>
                 <p>Stay secure,<br>The VendorRisk Team</p>
             `;
             await db.run(
@@ -379,7 +390,7 @@ app.post('/api/monitor/check', authMiddleware, async (req, res) => {
         console.log(`🔍 Proxying monitor check for vendor: ${vendorName}`);
         const pythonResponse = await axios.get(
             `${PYTHON_API_BASE}/analyze?vendor=${encodeURIComponent(vendorName)}`,
-            { timeout: 30000 }
+            { timeout: ANALYSIS_TIMEOUT_MS }
         );
 
         const pythonData = pythonResponse.data;
@@ -550,7 +561,7 @@ app.post('/auth/register', registerLimiter, async (req, res) => {
         );
 
         const verificationToken = generateVerificationToken();
-        const verifyLink = `http://localhost:8000/verify.html?token=${verificationToken}`;
+        const verifyLink = `${FRONTEND_URL}/verify.html?token=${verificationToken}`;
         const emailBody = `
             <h1>Welcome to VendorRisk!</h1>
             <p>Hi ${username},</p>
@@ -666,7 +677,7 @@ app.post('/auth/forgot-password', forgotPasswordLimiter, async (req, res) => {
         }
 
         const resetToken = generateVerificationToken();
-        const resetLink = `http://localhost:8000/reset-password.html?token=${resetToken}`;
+        const resetLink = `${FRONTEND_URL}/reset-password.html?token=${resetToken}`;
         const resetEmailBody = `
             <h1>Password Reset Request</h1>
             <p>Hi ${user.username},</p>
@@ -835,7 +846,7 @@ app.post('/api/analyze', authMiddleware, async (req, res) => {
 
         const pythonResponse = await axios.get(
             `${PYTHON_API_BASE}/analyze?vendor=${encodeURIComponent(vendorName)}`,
-            { timeout: 30000 }
+            { timeout: ANALYSIS_TIMEOUT_MS }
         );
 
         const pythonData = pythonResponse.data;
