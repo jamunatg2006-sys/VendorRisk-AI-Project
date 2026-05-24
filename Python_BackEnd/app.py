@@ -317,6 +317,8 @@ def analyze():
 if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    port = int(os.environ.get("PORT", 5000))
+    debug = os.environ.get("FLASK_DEBUG", "").lower() in ("1", "true", "yes")
     print("""
 ╔══════════════════════════════════════════════════════════╗
 ║   🛡️  VendorRisk AI — Python Risk Engine v2.0           ║
@@ -336,4 +338,4 @@ if __name__ == "__main__":
 ║   Output: fill_percent + hex color + status_text         ║
 ╚══════════════════════════════════════════════════════════╝
     """)
-    app.run(debug=True, port=5000, host="localhost")
+    app.run(debug=debug, port=port, host="0.0.0.0")
