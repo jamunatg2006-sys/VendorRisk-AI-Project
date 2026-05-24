@@ -14,12 +14,20 @@ import tempfile
 
 
 def _prepare_webtech_data_dir() -> None:
-    """Ensure webtech's XDG data parent exists before the package imports."""
+    """Ensure webtech's data folders exist before the package imports."""
     data_home = os.environ.get("XDG_DATA_HOME")
     if not data_home:
         data_home = os.path.join(tempfile.gettempdir(), "vendorrisk-data")
         os.environ["XDG_DATA_HOME"] = data_home
-    os.makedirs(os.path.join(data_home, "webtech"), exist_ok=True)
+
+    for path in (
+        os.path.expanduser("~/.local/share/webtech"),
+        os.path.join(data_home, "webtech"),
+    ):
+        try:
+            os.makedirs(path, exist_ok=True)
+        except OSError:
+            continue
 
 try:
     _prepare_webtech_data_dir()
