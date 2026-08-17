@@ -6,7 +6,7 @@ The project is built as a complete web application with authentication, dashboar
 
 ## Live Deployment
 
-Frontend:
+DEPLOYED URL:
 
 ```text
 https://vendor-risk-ai.vercel.app
@@ -24,7 +24,7 @@ Python risk engine:
 https://vendorrisk-ai-project-backend.onrender.com
 ```
 
-Important note: The project has been deployed successfully, but login on the deployed link may not work at the moment because the free hosting limit/quota has been exhausted. The complete project can still be run locally using the steps at the end of this README.
+<!-- Important note: The project has been deployed successfully, but login on the deployed link may not work at the moment because the free hosting limit/quota has been exhausted. The complete project can still be run locally using the steps at the end of this README. -->
 
 ## Problem Statement
 
